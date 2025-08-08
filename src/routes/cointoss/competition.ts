@@ -1,8 +1,10 @@
 import { Response } from 'express';
 import { db } from '../../db';
-import { coinTossCompetitions } from '../../db/schema';
+import { coinTossCompetitions, coinTossPresetPrizes } from '../../db/schema';
 import { and, gte, lte, eq, desc } from 'drizzle-orm';
 import { AuthRequest } from '../../utils/auth';
+import { SecureAuthRequest } from '../../utils/auth-secure';
+import { logAdminAction, AdminAction } from '../../utils/auditLog';
 
 export const getCompetition = async (req: AuthRequest, res: Response) => {
   try {
@@ -52,7 +54,25 @@ export const getCompetition = async (req: AuthRequest, res: Response) => {
         .set({ isActive: false })
         .where(eq(coinTossCompetitions.id, competition.id));
 
-      // Create new competition
+      // Get default prize if available
+      let prizeText = null;
+      let prizeImageUrl = null;
+      
+      const [defaultPrize] = await db
+        .select()
+        .from(coinTossPresetPrizes)
+        .where(and(
+          eq(coinTossPresetPrizes.isDefault, true),
+          eq(coinTossPresetPrizes.isActive, true)
+        ))
+        .limit(1);
+
+      if (defaultPrize) {
+        prizeText = defaultPrize.description;
+        prizeImageUrl = defaultPrize.imageUrl;
+      }
+
+      // Create new competition with default prize
       const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       
       await db
@@ -63,6 +83,8 @@ export const getCompetition = async (req: AuthRequest, res: Response) => {
           isActive: true,
           totalPlayers: 0,
           totalFlips: 0,
+          prizeText,
+          prizeImageUrl,
         });
       
       // Get the newly created competition
@@ -94,9 +116,9 @@ export const getCompetition = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const createCompetition = async (req: AuthRequest, res: Response) => {
+export const createCompetition = async (req: SecureAuthRequest, res: Response) => {
   try {
-    const { durationHours = 24 } = req.body;
+    const { durationHours = 24, useDefaultPrize = true } = req.body;
     const now = new Date();
     const endTime = new Date(now.getTime() + durationHours * 60 * 60 * 1000);
 
@@ -105,6 +127,26 @@ export const createCompetition = async (req: AuthRequest, res: Response) => {
       .update(coinTossCompetitions)
       .set({ isActive: false })
       .where(eq(coinTossCompetitions.isActive, true));
+
+    let prizeText = null;
+    let prizeImageUrl = null;
+
+    // Get default prize if requested
+    if (useDefaultPrize) {
+      const [defaultPrize] = await db
+        .select()
+        .from(coinTossPresetPrizes)
+        .where(and(
+          eq(coinTossPresetPrizes.isDefault, true),
+          eq(coinTossPresetPrizes.isActive, true)
+        ))
+        .limit(1);
+
+      if (defaultPrize) {
+        prizeText = defaultPrize.description;
+        prizeImageUrl = defaultPrize.imageUrl;
+      }
+    }
 
     // Create new competition
     await db
@@ -115,6 +157,8 @@ export const createCompetition = async (req: AuthRequest, res: Response) => {
         isActive: true,
         totalPlayers: 0,
         totalFlips: 0,
+        prizeText,
+        prizeImageUrl,
       });
     
     // Get the newly created competition
@@ -124,6 +168,20 @@ export const createCompetition = async (req: AuthRequest, res: Response) => {
       .where(eq(coinTossCompetitions.isActive, true))
       .orderBy(desc(coinTossCompetitions.id))
       .limit(1);
+
+    // Log admin action
+    await logAdminAction(
+      req,
+      AdminAction.CREATE_COMPETITION,
+      'competition',
+      competition.id,
+      { 
+        durationHours,
+        useDefaultPrize,
+        prizeApplied: !!prizeText
+      },
+      true
+    );
 
     return res.json({
       success: true,

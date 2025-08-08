@@ -131,6 +131,24 @@ export const coinTossWinners = mysqlTable('coin_toss_winners', {
   };
 });
 
+// Preset prizes for competitions
+export const coinTossPresetPrizes = mysqlTable('coin_toss_preset_prizes', {
+  id: int('id').autoincrement().notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description').notNull(),
+  imageUrl: text('image_url'),
+  isDefault: boolean('is_default').default(false),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp('updated_at').default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
+}, (table) => {
+  return {
+    isDefaultIdx: index('preset_prize_is_default_idx').on(table.isDefault),
+    isActiveIdx: index('preset_prize_is_active_idx').on(table.isActive),
+    primaryKey: primaryKey({ columns: [table.id], name: "coin_toss_preset_prizes_id"}),
+  };
+});
+
 // Export types
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type CoinTossCompetition = typeof coinTossCompetitions.$inferSelect;
@@ -139,3 +157,4 @@ export type CoinTossFlip = typeof coinTossFlips.$inferSelect;
 export type CoinTossAchievement = typeof coinTossAchievements.$inferSelect;
 export type CoinTossSettings = typeof coinTossSettings.$inferSelect;
 export type CoinTossWinner = typeof coinTossWinners.$inferSelect;
+export type CoinTossPresetPrize = typeof coinTossPresetPrizes.$inferSelect;

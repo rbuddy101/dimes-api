@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { rateLimiter } from './middleware/rateLimiter';
 import coinTossRoutes from './routes/cointoss';
+import userRoutes from './routes/user';
 
 // Load environment variables
 dotenv.config();
@@ -66,7 +67,8 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       api: {
-        cointoss: '/api/cointoss'
+        cointoss: '/api/cointoss',
+        user: '/api/user'
       }
     },
     timestamp: new Date().toISOString()
@@ -80,6 +82,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/cointoss', coinTossRoutes);
+app.use('/api/user', userRoutes);
 
 // 404 handler
 app.use((req, res) => {

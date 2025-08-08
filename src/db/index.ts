@@ -28,7 +28,7 @@ if (!hostParts) {
 const [, host, port] = hostParts;
 const database = databaseWithParams.split('?')[0]; // Remove query params
 
-console.log('Connecting to MySQL:', { host, port, user, database });
+// console.log('Connecting to MySQL:', { host, port, user, database });
 
 // Create MySQL connection pool with SSL support
 const pool = mysql.createPool({
@@ -48,8 +48,8 @@ const pool = mysql.createPool({
 // Create drizzle database instance
 export const db = drizzle(pool, { 
   schema,
-  mode: 'default',
-  logger: process.env.NODE_ENV === 'development'
+  mode: 'default'
+  // logger: process.env.NODE_ENV === 'development' // Removed SQL logging
 });
 
 export default db;
