@@ -14,8 +14,10 @@ const app = express();
 const PORT = parseInt(process.env.PORT || '3005', 10);
 
 // Trust proxy for DigitalOcean App Platform
+// DigitalOcean uses specific proxy IPs, so we limit trust to those
 if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', true);
+  // Trust only the immediate proxy (1 hop)
+  app.set('trust proxy', 1);
 }
 
 // Security middleware

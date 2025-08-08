@@ -7,6 +7,10 @@ export const rateLimiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  // Skip rate limiting in development
+  skip: (req) => process.env.NODE_ENV === 'development',
+  // Use default key generator which respects trust proxy setting
+  keyGenerator: (req) => req.ip || 'unknown',
 });
 
 // Specific rate limiter for coin flip endpoint
@@ -17,4 +21,8 @@ export const flipRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
+  // Skip rate limiting in development
+  skip: (req) => process.env.NODE_ENV === 'development',
+  // Use default key generator which respects trust proxy setting
+  keyGenerator: (req) => req.ip || 'unknown',
 });
