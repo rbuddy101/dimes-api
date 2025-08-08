@@ -13,6 +13,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3005;
 
+// Trust proxy for DigitalOcean App Platform
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', true);
+}
+
 // Security middleware
 app.use(helmet());
 
@@ -33,6 +38,22 @@ app.use(requestLogger);
 
 // Rate limiting
 app.use(rateLimiter);
+
+// Root endpoint - API info
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Dimes API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      api: {
+        cointoss: '/api/cointoss'
+      }
+    },
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
