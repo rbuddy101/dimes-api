@@ -1,0 +1,20 @@
+# DigitalOcean App Platform Configuration
+name: dimes-api
+region: nyc
+services:
+  - name: api
+    github:
+      repo: rbuddy101/dimes-api
+      branch: main
+      deploy_on_push: true
+    build_command: npm ci && npm run build
+    run_command: npm start
+    http_port: 3005
+    instance_count: 1
+    instance_size_slug: basic-xxs # $5/month instance
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3005"
+      # Add other environment variables in DigitalOcean dashboard
