@@ -83,13 +83,15 @@ export const syncFarcasterUsername = async (req: AuthRequest, res: Response) => 
       if (existingProfiles.length > 0) {
         profile = existingProfiles[0];
         
-        // Update username and/or FID if different
+        // Update username only if not set, always update FID if different
         const updates: any = { updatedAt: new Date() };
         
-        if (!profile.username || profile.username !== farcasterUsername) {
+        // Only set username if user doesn't have one
+        if (!profile.username || profile.username.trim() === '') {
           updates.username = farcasterUsername;
         }
         
+        // Always update FID if it's different
         if (farcasterFid && profile.farcasterFid !== farcasterFid) {
           updates.farcasterFid = farcasterFid;
         }
@@ -100,8 +102,13 @@ export const syncFarcasterUsername = async (req: AuthRequest, res: Response) => 
             .set(updates)
             .where(eq(userProfiles.id, profile.id));
           
-          profile.username = farcasterUsername;
-          profile.farcasterFid = farcasterFid || profile.farcasterFid;
+          // Update the profile object with new values
+          if (updates.username) {
+            profile.username = farcasterUsername;
+          }
+          if (updates.farcasterFid) {
+            profile.farcasterFid = farcasterFid;
+          }
         }
       } else {
         // Create new profile with Farcaster username and FID
@@ -138,13 +145,15 @@ export const syncFarcasterUsername = async (req: AuthRequest, res: Response) => 
         });
       }
 
-      // Update username and/or FID if different
+      // Update username only if not set, always update FID if different
       const updates: any = { updatedAt: new Date() };
       
-      if (!profile.username || profile.username !== farcasterUsername) {
+      // Only set username if user doesn't have one
+      if (!profile.username || profile.username.trim() === '') {
         updates.username = farcasterUsername;
       }
       
+      // Always update FID if it's different
       if (farcasterFid && profile.farcasterFid !== farcasterFid) {
         updates.farcasterFid = farcasterFid;
       }
@@ -155,8 +164,13 @@ export const syncFarcasterUsername = async (req: AuthRequest, res: Response) => 
           .set(updates)
           .where(eq(userProfiles.id, profile.id));
         
-        profile.username = farcasterUsername;
-        profile.farcasterFid = farcasterFid || profile.farcasterFid;
+        // Update the profile object with new values
+        if (updates.username) {
+          profile.username = farcasterUsername;
+        }
+        if (updates.farcasterFid) {
+          profile.farcasterFid = farcasterFid;
+        }
       }
     }
 
