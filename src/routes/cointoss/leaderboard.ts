@@ -63,6 +63,7 @@ export const getLeaderboard = async (req: AuthRequest, res: Response) => {
         username: userProfiles.username,
         walletAddress: userProfiles.walletAddress,
         avatarUrl: userProfiles.avatarUrl,
+        farcasterFid: userProfiles.farcasterFid,
       })
       .from(coinTossSessions)
       .innerJoin(userProfiles, eq(coinTossSessions.userId, userProfiles.id))
@@ -82,6 +83,7 @@ export const getLeaderboard = async (req: AuthRequest, res: Response) => {
       username: entry.username || formatAddress(entry.walletAddress),
       walletAddress: entry.walletAddress,
       avatarUrl: entry.avatarUrl,
+      farcasterFid: entry.farcasterFid,
       bestHeadsStreak: entry.bestHeadsStreak || 0,
       totalFlips: entry.totalFlips || 0,
       totalHeads: entry.totalHeads || 0,

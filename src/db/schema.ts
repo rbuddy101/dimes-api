@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm';
 export const userProfiles = mysqlTable('user_profiles', {
   id: int('id').autoincrement().notNull(),
   walletAddress: varchar('wallet_address', { length: 42 }).unique(),
+  farcasterFid: int('farcaster_fid'),
   username: varchar('username', { length: 50 }),
   avatarUrl: varchar('avatar_url', { length: 255 }),
   isAdmin: boolean('is_admin').default(false),
@@ -12,6 +13,7 @@ export const userProfiles = mysqlTable('user_profiles', {
   updatedAt: timestamp('updated_at').default(sql`CURRENT_TIMESTAMP`).onUpdateNow(),
 }, (table) => {
   return {
+    farcasterFidIdx: index('farcaster_fid_idx').on(table.farcasterFid),
     primaryKey: primaryKey({ columns: [table.id], name: "user_profiles_id"}),
   };
 });

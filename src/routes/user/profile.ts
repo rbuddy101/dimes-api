@@ -54,7 +54,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response) => {
 export const syncFarcasterUsername = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { farcasterUsername, walletAddress } = req.body;
+    const { farcasterUsername, farcasterFid, walletAddress } = req.body;
     
     if (!userId && !walletAddress) {
       return res.status(401).json({ 
@@ -83,25 +83,34 @@ export const syncFarcasterUsername = async (req: AuthRequest, res: Response) => 
       if (existingProfiles.length > 0) {
         profile = existingProfiles[0];
         
-        // Only sync if username is not already set or different
+        // Update username and/or FID if different
+        const updates: any = { updatedAt: new Date() };
+        
         if (!profile.username || profile.username !== farcasterUsername) {
+          updates.username = farcasterUsername;
+        }
+        
+        if (farcasterFid && profile.farcasterFid !== farcasterFid) {
+          updates.farcasterFid = farcasterFid;
+        }
+        
+        if (Object.keys(updates).length > 1) { // More than just updatedAt
           await db
             .update(userProfiles)
-            .set({ 
-              username: farcasterUsername,
-              updatedAt: new Date()
-            })
+            .set(updates)
             .where(eq(userProfiles.id, profile.id));
           
           profile.username = farcasterUsername;
+          profile.farcasterFid = farcasterFid || profile.farcasterFid;
         }
       } else {
-        // Create new profile with Farcaster username
+        // Create new profile with Farcaster username and FID
         const result = await db
           .insert(userProfiles)
           .values({
             walletAddress: walletAddress.toLowerCase(),
-            username: farcasterUsername
+            username: farcasterUsername,
+            farcasterFid: farcasterFid || null
           });
         
         const newProfiles = await db
@@ -129,17 +138,25 @@ export const syncFarcasterUsername = async (req: AuthRequest, res: Response) => 
         });
       }
 
-      // Only sync if username is not already set or different
+      // Update username and/or FID if different
+      const updates: any = { updatedAt: new Date() };
+      
       if (!profile.username || profile.username !== farcasterUsername) {
+        updates.username = farcasterUsername;
+      }
+      
+      if (farcasterFid && profile.farcasterFid !== farcasterFid) {
+        updates.farcasterFid = farcasterFid;
+      }
+      
+      if (Object.keys(updates).length > 1) { // More than just updatedAt
         await db
           .update(userProfiles)
-          .set({ 
-            username: farcasterUsername,
-            updatedAt: new Date()
-          })
+          .set(updates)
           .where(eq(userProfiles.id, profile.id));
         
         profile.username = farcasterUsername;
+        profile.farcasterFid = farcasterFid || profile.farcasterFid;
       }
     }
 
@@ -156,7 +173,8 @@ export const syncFarcasterUsername = async (req: AuthRequest, res: Response) => 
         id: profile.id,
         walletAddress: profile.walletAddress,
         username: profile.username,
-        avatarUrl: profile.avatarUrl
+        avatarUrl: profile.avatarUrl,
+        farcasterFid: profile.farcasterFid
       },
       synced: true
     });
