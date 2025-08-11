@@ -115,6 +115,7 @@ export const getSession = async (req: AuthRequest, res: Response) => {
         totalTails: userSession.totalTails,
         currentStreak: userSession.currentStreak,
         bestHeadsStreak: userSession.bestHeadsStreak,
+        bestTailsStreak: userSession.bestTailsStreak,
         winRate,
         lastFlipAt: userSession.lastFlipAt,
         dailyFailsUsed: userSession.dailyFailsUsed || 0,

@@ -81,6 +81,7 @@ export const recordFlip = async (req: AuthRequest, res: Response) => {
           totalTails: 0,
           currentStreak: 0,
           bestHeadsStreak: 0,
+          bestTailsStreak: 0,
           dailyFailsUsed: 0,
         });
       
@@ -131,9 +132,24 @@ export const recordFlip = async (req: AuthRequest, res: Response) => {
       });
     }
     
-    // Calculate streak
-    const newStreak = result === 'heads' ? (userSession.currentStreak || 0) + 1 : 0;
-    const newBestStreak = Math.max(userSession.bestHeadsStreak || 0, newStreak);
+    // Calculate streak - now tracking both heads and tails
+    const currentStreakType = userSession.currentStreak || 0;
+    const isCurrentStreakHeads = currentStreakType > 0;
+    const isCurrentStreakTails = currentStreakType < 0;
+    
+    let newStreak = 0;
+    if (result === 'heads') {
+      newStreak = isCurrentStreakHeads ? currentStreakType + 1 : 1;
+    } else {
+      newStreak = isCurrentStreakTails ? currentStreakType - 1 : -1;
+    }
+    
+    const newBestHeadsStreak = result === 'heads' && newStreak > 0 
+      ? Math.max(userSession.bestHeadsStreak || 0, newStreak)
+      : userSession.bestHeadsStreak || 0;
+    const newBestTailsStreak = result === 'tails' && newStreak < 0
+      ? Math.max(userSession.bestTailsStreak || 0, Math.abs(newStreak))
+      : userSession.bestTailsStreak || 0;
 
     // Record the flip
     await db
@@ -142,7 +158,7 @@ export const recordFlip = async (req: AuthRequest, res: Response) => {
         sessionId: userSession.id,
         userId: userId,
         result: result as 'heads' | 'tails',
-        streakCount: newStreak,
+        streakCount: Math.abs(newStreak),
         flippedAt: now,
       });
     
@@ -162,7 +178,8 @@ export const recordFlip = async (req: AuthRequest, res: Response) => {
         totalHeads: result === 'heads' ? (userSession.totalHeads || 0) + 1 : (userSession.totalHeads || 0),
         totalTails: result === 'tails' ? (userSession.totalTails || 0) + 1 : (userSession.totalTails || 0),
         currentStreak: newStreak,
-        bestHeadsStreak: newBestStreak,
+        bestHeadsStreak: newBestHeadsStreak,
+        bestTailsStreak: newBestTailsStreak,
         dailyFailsUsed: result === 'tails' ? dailyFailsUsed + 1 : dailyFailsUsed,
         lastFlipAt: now,
       })
@@ -186,7 +203,7 @@ export const recordFlip = async (req: AuthRequest, res: Response) => {
     ];
 
     for (const milestone of streakMilestones) {
-      if (newStreak === milestone.value) {
+      if (Math.abs(newStreak) === milestone.value && newStreak > 0) {
         // Check if achievement already exists
         const [existing] = await db
           .select()
@@ -227,7 +244,8 @@ export const recordFlip = async (req: AuthRequest, res: Response) => {
       totalHeads: result === 'heads' ? (userSession.totalHeads || 0) + 1 : (userSession.totalHeads || 0),
       totalTails: result === 'tails' ? (userSession.totalTails || 0) + 1 : (userSession.totalTails || 0),
       currentStreak: newStreak,
-      bestHeadsStreak: newBestStreak,
+      bestHeadsStreak: newBestHeadsStreak,
+      bestTailsStreak: newBestTailsStreak,
       dailyFailsUsed: result === 'tails' ? dailyFailsUsed + 1 : dailyFailsUsed,
       winRate: Math.round(((result === 'heads' ? (userSession.totalHeads || 0) + 1 : (userSession.totalHeads || 0)) / ((userSession.totalFlips || 0) + 1)) * 100).toString(),
     };
@@ -237,12 +255,12 @@ export const recordFlip = async (req: AuthRequest, res: Response) => {
       flip: {
         id: flip.id,
         result,
-        streakCount: newStreak,
+        streakCount: Math.abs(newStreak),
         timestamp: flip.flippedAt,
       },
       session: updatedSession,
       achievements,
-      isOnLeaderboard: newBestStreak >= (settings.minStreakForLeaderboard || 5),
+      isOnLeaderboard: newBestHeadsStreak >= (settings.minStreakForLeaderboard || 5),
       dailyFailLimit: settings.dailyFailLimit || 3,
     };
 

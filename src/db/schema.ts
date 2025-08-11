@@ -51,6 +51,7 @@ export const coinTossSessions = mysqlTable('coin_toss_sessions', {
   totalTails: int('total_tails').default(0),
   currentStreak: int('current_streak').default(0),
   bestHeadsStreak: int('best_heads_streak').default(0),
+  bestTailsStreak: int('best_tails_streak').default(0),
   dailyFailsUsed: int('daily_fails_used').default(0),
   lastFlipAt: timestamp('last_flip_at'),
   createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
@@ -59,6 +60,7 @@ export const coinTossSessions = mysqlTable('coin_toss_sessions', {
   return {
     competitionUserIdx: index('session_competition_user_idx').on(table.competitionId, table.userId),
     bestStreakIdx: index('session_best_streak_idx').on(table.bestHeadsStreak),
+    bestTailsStreakIdx: index('session_best_tails_streak_idx').on(table.bestTailsStreak),
     primaryKey: primaryKey({ columns: [table.id], name: "coin_toss_sessions_id"}),
   };
 });
