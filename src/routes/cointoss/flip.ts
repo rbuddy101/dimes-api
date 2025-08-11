@@ -58,6 +58,7 @@ export const recordFlip = async (req: AuthRequest, res: Response) => {
     }
 
     // Get or create user session for this competition
+    // First, always try to get existing session
     let [userSession] = await db
       .select()
       .from(coinTossSessions)
@@ -70,22 +71,36 @@ export const recordFlip = async (req: AuthRequest, res: Response) => {
       .limit(1);
 
     if (!userSession) {
-      // Create new session
-      await db
-        .insert(coinTossSessions)
-        .values({
-          competitionId: competition.id,
-          userId: userId,
-          totalFlips: 0,
-          totalHeads: 0,
-          totalTails: 0,
-          currentStreak: 0,
-          bestHeadsStreak: 0,
-          bestTailsStreak: 0,
-          dailyFailsUsed: 0,
-        });
+      // Try to create new session, but handle race conditions
+      try {
+        await db
+          .insert(coinTossSessions)
+          .values({
+            competitionId: competition.id,
+            userId: userId,
+            totalFlips: 0,
+            totalHeads: 0,
+            totalTails: 0,
+            currentStreak: 0,
+            bestHeadsStreak: 0,
+            bestTailsStreak: 0,
+            dailyFailsUsed: 0,
+          });
+        
+        // Update competition player count
+        await db
+          .update(coinTossCompetitions)
+          .set({ 
+            totalPlayers: sql`${coinTossCompetitions.totalPlayers} + 1` 
+          })
+          .where(eq(coinTossCompetitions.id, competition.id));
+      } catch (error: any) {
+        // If insert fails due to race condition, just continue
+        // The session was likely created by another concurrent request
+        console.log('Session creation race condition handled:', error.message);
+      }
       
-      // Get the newly created session
+      // Get the session (either newly created or created by concurrent request)
       [userSession] = await db
         .select()
         .from(coinTossSessions)
@@ -97,13 +112,12 @@ export const recordFlip = async (req: AuthRequest, res: Response) => {
         )
         .limit(1);
 
-      // Update competition player count
-      await db
-        .update(coinTossCompetitions)
-        .set({ 
-          totalPlayers: sql`${coinTossCompetitions.totalPlayers} + 1` 
-        })
-        .where(eq(coinTossCompetitions.id, competition.id));
+      if (!userSession) {
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to create or retrieve session'
+        });
+      }
     }
 
     // Check rate limiting (max flips per minute) - Allow 240 flips per minute (0.25 second minimum)
