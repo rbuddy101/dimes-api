@@ -33,7 +33,7 @@ export const getPresetPrizes = async (req: SecureAuthRequest, res: Response) => 
 // Create a new preset prize
 export const createPresetPrize = async (req: SecureAuthRequest, res: Response) => {
   try {
-    const { name, description, imageUrl, isDefault = false } = req.body;
+    const { name, description, imageUrl, requiresAddress = false, isDefault = false } = req.body;
 
     if (!name || !description) {
       return res.status(400).json({
@@ -54,6 +54,7 @@ export const createPresetPrize = async (req: SecureAuthRequest, res: Response) =
       name: name.trim(),
       description: description.trim(),
       imageUrl: imageUrl?.trim() || null,
+      requiresAddress,
       isDefault,
       isActive: true,
     });
@@ -75,7 +76,7 @@ export const createPresetPrize = async (req: SecureAuthRequest, res: Response) =
 export const updatePresetPrize = async (req: SecureAuthRequest, res: Response) => {
   try {
     const prizeId = parseInt(req.params.id);
-    const { name, description, imageUrl, isDefault, isActive } = req.body;
+    const { name, description, imageUrl, requiresAddress, isDefault, isActive } = req.body;
 
     if (isNaN(prizeId)) {
       return res.status(400).json({
@@ -105,6 +106,7 @@ export const updatePresetPrize = async (req: SecureAuthRequest, res: Response) =
         name: name.trim(),
         description: description.trim(),
         imageUrl: imageUrl?.trim() || null,
+        requiresAddress: requiresAddress !== undefined ? requiresAddress : false,
         isDefault: isDefault || false,
         isActive: isActive !== undefined ? isActive : true,
       })

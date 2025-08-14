@@ -89,7 +89,8 @@ router.put('/admin/prize',
   validateBody(Joi.object({
     competitionId: schemas.id.required(),
     prizeText: Joi.string().allow('', null),
-    prizeImageUrl: Joi.string().uri().allow('', null)
+    prizeImageUrl: Joi.string().uri().allow('', null),
+    requiresAddress: Joi.boolean().default(false)
   })),
   updateCompetitionPrize
 );

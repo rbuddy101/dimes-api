@@ -29,6 +29,7 @@ export const coinTossCompetitions = mysqlTable('coin_toss_competitions', {
   totalFlips: int('total_flips').default(0),
   prizeText: text('prize_text'),
   prizeImageUrl: text('prize_image_url'),
+  requiresAddress: boolean('requires_address').default(false),
   winnersSelected: boolean('winners_selected').default(false),
   prizeDelivered: boolean('prize_delivered').default(false),
   createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
@@ -141,6 +142,7 @@ export const coinTossPresetPrizes = mysqlTable('coin_toss_preset_prizes', {
   name: varchar('name', { length: 100 }).notNull(),
   description: text('description').notNull(),
   imageUrl: text('image_url'),
+  requiresAddress: boolean('requires_address').default(false),
   isDefault: boolean('is_default').default(false),
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
@@ -149,6 +151,7 @@ export const coinTossPresetPrizes = mysqlTable('coin_toss_preset_prizes', {
   return {
     isDefaultIdx: index('preset_prize_is_default_idx').on(table.isDefault),
     isActiveIdx: index('preset_prize_is_active_idx').on(table.isActive),
+    requiresAddressIdx: index('preset_prize_requires_address_idx').on(table.requiresAddress),
     primaryKey: primaryKey({ columns: [table.id], name: "coin_toss_preset_prizes_id"}),
   };
 });

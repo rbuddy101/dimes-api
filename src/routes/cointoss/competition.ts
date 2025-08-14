@@ -57,6 +57,7 @@ export const getCompetition = async (req: AuthRequest, res: Response) => {
       // Get default prize if available
       let prizeText = null;
       let prizeImageUrl = null;
+      let requiresAddress = false;
       
       const [defaultPrize] = await db
         .select()
@@ -70,6 +71,7 @@ export const getCompetition = async (req: AuthRequest, res: Response) => {
       if (defaultPrize) {
         prizeText = defaultPrize.description;
         prizeImageUrl = defaultPrize.imageUrl;
+        requiresAddress = defaultPrize.requiresAddress;
       }
 
       // Create new competition with default prize
@@ -85,6 +87,7 @@ export const getCompetition = async (req: AuthRequest, res: Response) => {
           totalFlips: 0,
           prizeText,
           prizeImageUrl,
+          requiresAddress,
         });
       
       // Get the newly created competition
@@ -130,6 +133,7 @@ export const createCompetition = async (req: SecureAuthRequest, res: Response) =
 
     let prizeText = null;
     let prizeImageUrl = null;
+    let requiresAddress = false;
 
     // Get default prize if requested
     if (useDefaultPrize) {
@@ -145,6 +149,7 @@ export const createCompetition = async (req: SecureAuthRequest, res: Response) =
       if (defaultPrize) {
         prizeText = defaultPrize.description;
         prizeImageUrl = defaultPrize.imageUrl;
+        requiresAddress = defaultPrize.requiresAddress;
       }
     }
 
@@ -159,6 +164,7 @@ export const createCompetition = async (req: SecureAuthRequest, res: Response) =
         totalFlips: 0,
         prizeText,
         prizeImageUrl,
+        requiresAddress,
       });
     
     // Get the newly created competition

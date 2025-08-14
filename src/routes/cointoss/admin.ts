@@ -121,7 +121,7 @@ export const resetDailyStats = async (req: SecureAuthRequest, res: Response) => 
 // Update prize for current competition
 export const updateCompetitionPrize = async (req: SecureAuthRequest, res: Response) => {
   try {
-    const { competitionId, prizeText, prizeImageUrl } = req.body;
+    const { competitionId, prizeText, prizeImageUrl, requiresAddress = false } = req.body;
 
     if (!competitionId) {
       return res.status(400).json({
@@ -136,6 +136,7 @@ export const updateCompetitionPrize = async (req: SecureAuthRequest, res: Respon
       .set({
         prizeText: prizeText || null,
         prizeImageUrl: prizeImageUrl || null,
+        requiresAddress: requiresAddress !== undefined ? requiresAddress : false,
         updatedAt: new Date()
       })
       .where(eq(coinTossCompetitions.id, competitionId));
@@ -160,7 +161,7 @@ export const updateCompetitionPrize = async (req: SecureAuthRequest, res: Respon
       AdminAction.UPDATE_PRIZE,
       'competition',
       competitionId,
-      { prizeText, prizeImageUrl },
+      { prizeText, prizeImageUrl, requiresAddress },
       true
     );
 
